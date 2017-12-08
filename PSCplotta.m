@@ -62,7 +62,20 @@ for g=1:numFile
   [resRow,resCol]=find(strcmp(fn,r.listExpFile));
   if ~isempty(resRow)
     existPSCResult=true;
-    % number of PSCs (based on first parameter)
+    % find out whether PSCs were fitted
+    existFitPSCResult=any(strcmp(r.depPar,'tDecay'));
+    % if PSCs were fitted, base (some of) the computations on values of
+    % fitted PSCs, otherwise on detected PSCs
+    if existFitPSCResult
+      tslParName='tsl';
+      ampParName='amp';
+    else
+      tslParName='allTsl';
+      %§
+      % ampParName='allAmp'; 
+      ampParName='allCAmp';
+    end
+    % number of PSCs (based on first select parameter)
     nPSC=numel(r.pscr{resRow,resCol,strcmp(r.depPar,gr.selectPSCPar{1,1})});
     % logical index to PSCs fulfilling inclusion criteria
     OKIx=true(nPSC,1);
@@ -72,32 +85,32 @@ for g=1:numFile
       r.pscr{resRow,resCol,ix}>=gr.selectPSCPar{k,2}(1) & ...
         r.pscr{resRow,resCol,ix}<=gr.selectPSCPar{k,2}(2);
     end
-    if any(OKIx) 
-      % omit those PSCs from list followed by a sizeable PSC in their decay
-      % time:
-      % - index to tsls of detected PSCs
-      ix1=strcmp(r.depPar,'allTsl');
-      % - index to tsls of detected and fitted PSCs
-      ix2=strcmp(r.depPar,'tsl');
-      %       % - §§ make sure tsl is column array...
-      %       r.pscr{resRow,resCol,ix2}=r.pscr{resRow,resCol,ix2}(:);
-      % inter-PSC-intervals for all combinations of candidate PSCs and all
-      % detected PSCs (** note new automatic arithmetic expansion here and
-      % further below)
-      tmpMat=r.pscr{resRow,resCol,ix1}'-r.pscr{resRow,resCol,ix2}(OKIx);
-      % convert to logicals (true if within [0 gr.cutoutIntv(2)])
-      tmpMat=tmpMat>0 & tmpMat<gr.cutoutIntv(2);
-      % compute offending PSCs' amplitude relative to the candidate PSC's
-      % amplitude
-      ix1=strcmp(r.depPar,'allAmp');
-      ix2=strcmp(r.depPar,'amp');
-      tmpMat=tmpMat.*r.pscr{resRow,resCol,ix1}'./r.pscr{resRow,resCol,ix2}(OKIx);
-      % eliminate entries in which the summed relative amplitude is above a
-      % threshold of gr.disturbPSCNormAmpThresh
-      OKIx=find(OKIx);
-      OKIx(sum(tmpMat,2,'omitnan')>=gr.disturbPSCNormAmpThresh)=[];
-    else
-      OKIx=find(OKIx);
+    OKIx=find(OKIx);
+    if ~isempty(OKIx)
+      if isfinite(gr.disturbPSCNormAmpThresh)
+        % omit those PSCs from list followed by a sizeable PSC in their decay
+        % time:
+        % - indexes to tsls and amplitudes of PSCs
+        tslIx1=strcmp(r.depPar,'allTsl');
+        ampIx1=strcmp(r.depPar,'allCAmp');
+        tslIx2=strcmp(r.depPar,tslParName);
+        ampIx2=strcmp(r.depPar,ampParName);
+        
+        %       % - §§ make sure tsl is column array...
+        %       r.pscr{resRow,resCol,tslIx2}=r.pscr{resRow,resCol,tslIx2}(:);
+        % inter-PSC-intervals for all combinations of candidate PSCs and all
+        % detected PSCs (** note new automatic arithmetic expansion here and
+        % further below; also note that for memory reasons we convert to single)
+        tmpMat=single(r.pscr{resRow,resCol,tslIx1}')-single(r.pscr{resRow,resCol,tslIx2}(OKIx));
+        % convert to logicals (true if within [0 gr.cutoutIntv(2)])
+        tmpMat=tmpMat>0 & tmpMat<gr.cutoutIntv(2);
+        % compute offending PSCs' amplitude relative to the candidate PSC's
+        % amplitude
+        tmpMat=tmpMat.*single(r.pscr{resRow,resCol,ampIx1}')./single(r.pscr{resRow,resCol,ampIx2}(OKIx));
+        % eliminate entries in which the summed relative amplitude is above a
+        % threshold of gr.disturbPSCNormAmpThresh
+        OKIx(sum(tmpMat,2,'omitnan')>=gr.disturbPSCNormAmpThresh)=[];
+      end
     end
     nOK=numel(OKIx);
     if nOK<gr.numCutout
@@ -111,8 +124,8 @@ for g=1:numFile
       OKIx=sort(OKIx(randperm(nOK,gr.numCutout)));
     end
     % extract tsl and other info needed further below
-    psc.tsl=r.pscr{resRow,resCol,strcmp(r.depPar,'tsl')}(OKIx);
-    psc.amp=r.pscr{resRow,resCol,strcmp(r.depPar,'amp')}(OKIx);
+    psc.tsl=r.pscr{resRow,resCol,strcmp(r.depPar,tslParName)}(OKIx);
+    psc.amp=r.pscr{resRow,resCol,strcmp(r.depPar,ampParName)}(OKIx);
     % compute indexes to part of cutouts to be used for computation of base line
     psc.baselineIx=cont2discrete(gr.baselineIntv-gr.cutoutIntv(1),si/1000,'intv',true);
   else
