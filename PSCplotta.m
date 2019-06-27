@@ -71,9 +71,7 @@ for g=1:numFile
       ampParName='amp';
     else
       tslParName='allTsl';
-      %§
-      % ampParName='allAmp'; 
-      ampParName='allCAmp';
+      ampParName='allAmp'; 
     end
     % number of PSCs (based on first select parameter)
     nPSC=numel(r.pscr{resRow,resCol,strcmp(r.depPar,gr.selectPSCPar{1,1})});
@@ -92,7 +90,7 @@ for g=1:numFile
         % time:
         % - indexes to tsls and amplitudes of PSCs
         tslIx1=strcmp(r.depPar,'allTsl');
-        ampIx1=strcmp(r.depPar,'allCAmp');
+        ampIx1=strcmp(r.depPar,'allAmp');
         tslIx2=strcmp(r.depPar,tslParName);
         ampIx2=strcmp(r.depPar,ampParName);
         

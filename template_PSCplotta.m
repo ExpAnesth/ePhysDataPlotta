@@ -3,11 +3,11 @@ compName=lower(getenv('computername'));
 switch compName
   case {'hh-i7'}
     sumResultDataPath='d:/hh/projects/ctx_propoSevo/data_IPSC/';
-    dataPath='d:/_data/otc_ctx/SevoPropo/';
+    dataPath='d:/_data/otc_ctx/SevoPropo/IPSC/';
     plotPath='d:/hh/projects/ctx_propoSevo/rawFig/';
   case {'hh64'}
     sumResultDataPath='d:/hh/projects/ctx_propoSevo/data_IPSC/';
-    dataPath='e:/_data/otc_ctx/SevoPropo/';
+    dataPath='e:/_data/otc_ctx/SevoPropo/IPSC/';
     plotPath='d:/hh/projects/ctx_propoSevo/rawFig/';
   otherwise
     error('unknown machine')
